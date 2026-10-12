@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prüfungskultur im Kontext von KI</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --ink: #111111;
+    --muted: #8a8a8a;
+    --line: #e4e4e4;
+    --accent: #2f5bea;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--ink); }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  .slide {
+    position: absolute; inset: 0;
+    display: none;
+    flex-direction: column; justify-content: center;
+    padding: 6vh 8vw;
+  }
+  .slide.active { display: flex; }
+  .center { align-items: center; text-align: center; }
+
+  h1 { font-size: clamp(2.2rem, 5.5vw, 5rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.08; }
+  h2 { font-size: clamp(1.8rem, 4vw, 3.6rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.12; }
+  .big { font-size: clamp(3rem, 9vw, 9rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+  .sub { margin-top: 2.5vh; font-size: clamp(1rem, 2vw, 1.7rem); color: var(--muted); font-weight: 400; }
+  .label { font-size: clamp(0.8rem, 1.2vw, 1rem); text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin-bottom: 2vh; }
+  .q { color: var(--accent); }
+
+  /* Räume */
+  .rooms { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3vw; margin-top: 6vh; }
+  .rooms div { border-top: 3px solid var(--ink); padding-top: 2vh; font-size: clamp(1.2rem, 2.4vw, 2rem); font-weight: 600; }
+  .rooms span { display: block; font-size: clamp(0.8rem, 1.2vw, 1rem); color: var(--muted); font-weight: 400; margin-bottom: 1vh; text-transform: uppercase; letter-spacing: 0.12em; }
+
+  /* Lernen ⇄ Prüfen */
+  .pair { display: flex; align-items: center; justify-content: center; gap: 4vw; margin-top: 2vh; }
+  .pair .word { font-size: clamp(2.4rem, 7vw, 7rem); font-weight: 700; letter-spacing: -0.03em; }
+  .pair svg { width: clamp(70px, 10vw, 160px); height: auto; }
+
+  /* Drei Felder */
+  .fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3vw; margin-top: 6vh; }
+  .field h3 { font-size: clamp(1.4rem, 3vw, 2.6rem); font-weight: 700; letter-spacing: -0.02em; padding-bottom: 1.5vh; border-bottom: 3px solid var(--ink); }
+  .field h3 em { font-style: normal; color: var(--accent); }
+  .field p { margin-top: 2vh; font-size: clamp(1rem, 1.6vw, 1.4rem); line-height: 1.45; color: #333; }
+
+  /* Bausteine */
+  .chips { display: flex; flex-wrap: wrap; gap: 1.2vw; margin-top: 5vh; max-width: 70vw; }
+  .chips span { border: 2px solid var(--ink); border-radius: 999px; padding: 0.6em 1.2em; font-size: clamp(0.9rem, 1.6vw, 1.4rem); font-weight: 500; }
+  .chips span.ki { border-color: var(--accent); color: var(--accent); }
+
+  /* Spinne */
+  .spider-wrap { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 4vw; }
+  .spider-wrap svg { width: 100%; max-height: 70vh; }
+  .legend { margin-top: 3vh; display: flex; flex-direction: column; gap: 1.2vh; font-size: clamp(0.9rem, 1.4vw, 1.2rem); color: #333; }
+  .legend i { display: inline-block; width: 1.4em; height: 0.35em; vertical-align: middle; margin-right: 0.6em; }
+
+  /* Achsen-Folien */
+  .axis-head { display: flex; align-items: baseline; justify-content: space-between; gap: 2vw; }
+  .axis-num { font-size: clamp(0.9rem, 1.4vw, 1.2rem); color: var(--muted); }
+  .track { position: relative; margin: 7vh 0 4vh; height: 4px; background: var(--line); border-radius: 2px; }
+  .track::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, var(--ink), var(--accent)); border-radius: 2px; }
+  .track .dot { position: absolute; top: 50%; width: 18px; height: 18px; border-radius: 50%; background: var(--bg); border: 3px solid var(--ink); transform: translate(-50%, -50%); z-index: 1; }
+  .track .dot:nth-child(1) { left: 0; }
+  .track .dot:nth-child(2) { left: 50%; }
+  .track .dot:nth-child(3) { left: 100%; border-color: var(--accent); }
+  .poles { display: flex; justify-content: space-between; font-size: clamp(1rem, 1.8vw, 1.5rem); font-weight: 600; margin-top: -2vh; }
+  .poles span:last-child { color: var(--accent); }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3vw; margin-top: 5vh; }
+  .steps p { font-size: clamp(1rem, 1.7vw, 1.45rem); line-height: 1.45; color: #222; }
+  .steps p b { display: block; font-size: clamp(0.75rem, 1.1vw, 0.95rem); text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); font-weight: 500; margin-bottom: 1vh; }
+  .steps p:nth-child(2) { text-align: center; }
+  .steps p:nth-child(3) { text-align: right; }
+
+  .source { position: absolute; left: 8vw; bottom: 4vh; font-size: clamp(0.7rem, 1vw, 0.85rem); color: var(--muted); }
+
+  /* Navigation */
+  .progress { position: fixed; left: 0; bottom: 0; height: 3px; background: var(--ink); transition: width 0.25s ease; }
+  .counter { position: fixed; right: 2vw; bottom: 2vh; font-size: 0.8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .home { position: fixed; left: 2vw; bottom: 2vh; font-size: 0.8rem; color: var(--muted); text-decoration: none; }
+  .home:hover { color: var(--ink); }
+  .hint { position: fixed; left: 50%; bottom: 2vh; transform: translateX(-50%); font-size: 0.8rem; color: var(--muted); transition: opacity 0.6s; }
+
+  @media (max-width: 760px) {
+    .rooms, .fields, .steps, .spider-wrap { grid-template-columns: 1fr; }
+    .steps p:nth-child(2), .steps p:nth-child(3) { text-align: left; }
+    .slide { padding: 6vh 16px; overflow-y: auto; justify-content: flex-start; padding-top: 10vh; }
+    .chips { max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 1 Titel -->
+<section class="slide center">
+  <h1>Prüfungskultur<br>im Kontext von KI</h1>
+  <p class="sub">Abschlussarbeiten und weitere schriftliche Arbeiten</p>
+</section>
+
+<!-- 2 KI? -->
+<section class="slide center">
+  <div class="big">KI<span class="q">?</span></div>
+</section>
+
+<!-- 3 Technik, keine Magie -->
+<section class="slide">
+  <h2>KI ist Technik –<br><span class="q">keine Magie.</span></h2>
+</section>
+
+<!-- 4 Sparringspartner -->
+<section class="slide">
+  <h2>Lernförderliche Nutzung<br>als Sparringspartner<span class="q">?</span></h2>
+</section>
+
+<!-- 5 Nicht neutral -->
+<section class="slide">
+  <h2>Technik ist<br><span class="q">nicht neutral.</span></h2>
+</section>
+
+<!-- 6 Pädagogische Verantwortung -->
+<section class="slide">
+  <div class="label">Pädagogische Verantwortung</div>
+  <h2>Räume schaffen</h2>
+  <div class="rooms">
+    <div><span>Räume für</span>Entwicklung</div>
+    <div><span>Räume für</span>Reflexion</div>
+    <div><span>Räume für</span>Gestaltung</div>
+  </div>
+</section>
+
+<!-- 7 Lernen ⇄ Prüfen -->
+<section class="slide center">
+  <div class="pair">
+    <span class="word">Lernen</span>
+    <svg viewBox="0 0 120 60" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M8 20 H108 M94 8 L108 20 L94 32"/>
+      <path d="M112 42 H12 M26 30 L12 42 L26 54" stroke="#2f5bea"/>
+    </svg>
+    <span class="word">Prüfen</span>
+  </div>
+  <p class="sub">Verändertes Lernen braucht veränderte Prüfungen – und umgekehrt.</p>
+</section>
+
+<!-- 8 Drei Felder -->
+<section class="slide">
+  <div class="label">Drei Felder</div>
+  <div class="fields">
+    <div class="field">
+      <h3>Prüfen <em>mit</em> KI</h3>
+      <p>KI darf als Werkzeug genutzt werden – die Nutzung wird dokumentiert und reflektiert.</p>
+    </div>
+    <div class="field">
+      <h3>Prüfen <em>ohne</em> KI</h3>
+      <p>Bewusst Situationen gestalten, in denen KI keine Rolle spielt.</p>
+    </div>
+    <div class="field">
+      <h3>Prüfen <em>über</em> KI</h3>
+      <p>Untersuchen, wie KI im jeweiligen Fachgebiet verwendet wird und werden kann.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 9 Der Trick -->
+<section class="slide">
+  <div class="label">Der Trick</div>
+  <h2>Nicht nur fragen: KI – ja oder nein<span class="q">?</span><br>Sondern weiten und öffnen.</h2>
+  <div class="chips">
+    <span>Raum</span><span>Zeit</span><span>Material</span><span>Aufgaben</span>
+    <span class="ki">Hilfsmittel</span><span>Sozialform</span><span>Produkt</span><span>Feedback</span>
+  </div>
+</section>
+
+<!-- 10 Formatspinne -->
+<section class="slide">
+  <div class="spider-wrap">
+    <div>
+      <div class="label">Reflexionstool</div>
+      <h2>Die Formatspinne</h2>
+      <p class="sub">Acht Stellschrauben eines Prüfungsformats – von eng (innen) bis offen (außen). Ziel ist nicht die größte Fläche, sondern die passende.</p>
+      <div class="legend">
+        <span><i style="background:#bbb"></i>klassische Abschlussarbeit (eigene Einschätzung)</span>
+        <span><i style="background:#2f5bea"></i>ein mögliches geöffnetes Format</span>
+      </div>
+    </div>
+    <svg id="spider" viewBox="-290 -210 580 420" role="img" aria-label="Netzdiagramm mit acht Achsen"></svg>
+  </div>
+  <p class="source">Formatspinne: Institut für zeitgemäße Prüfungskultur · pruefungskultur.de/ressource/formatspinne</p>
+</section>
+
+<!-- 11–18 Achsen -->
+<section class="slide">
+  <div class="axis-head"><h2>Raum</h2><span class="axis-num">1 / 8</span></div>
+  <div class="track"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+  <div class="poles"><span>festgelegt</span><span>frei wählbar</span></div>
+  <div class="steps">
+    <p><b>eng</b>Schreibphase oder Verteidigung unter Aufsicht im Prüfungsraum</p>
+    <p><b>dazwischen</b>Arbeiten von überall, Verteidigung vor Ort</p>
+    <p><b>offen</b>Arbeit beim Praxispartner, im Feld, in der Community</p>
+  </div>
+  <p class="source">Formatspinne: Institut für zeitgemäße Prüfungskultur</p>
+</section>
+
+<section class="slide">
+  <div class="axis-head"><h2>Zeitintervall</h2><span class="axis-num">2 / 8</span></div>
+  <div class="track"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+  <div class="poles"><span>eng</span><span>weit</span></div>
+  <div class="steps">
+    <p><b>eng</b>3-Minuten-Pitch, 25-minütiges Prüfungsgespräch</p>
+    <p><b>dazwischen</b>Klassische Bearbeitungszeit von einigen Monaten</p>
+    <p><b>offen</b>Studienbegleitendes Portfolio über mehrere Semester</p>
+  </div>
+  <p class="source">Formatspinne: Institut für zeitgemäße Prüfungskultur</p>
+</section>
+
+<section class="slide">
+  <div class="axis-head"><h2>Material</h2><span class="axis-num">3 / 8</span></div>
+  <div class="track"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+  <div class="poles"><span>nichts</span><span>alles</span></div>
+  <div class="steps">
+    <p><b>eng</b>Fachgespräch ohne Unterlagen</p>
+    <p><b>dazwischen</b>Vorgegebener Quellenkorpus oder Datensatz</p>
+    <p><b>offen</b>Freie Recherche, eigene Daten, alle Quellen</p>
+  </div>
+  <p class="source">Formatspinne: Institut für zeitgemäße Prüfungskultur</p>
+</section>
+
+<section class="slide">
+  <div class="axis-head"><h2>Aufgaben</h2><span class="axis-num">4 / 8</span></div>
+  <div class="track"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+  <div class="poles"><span>geschlossen</span><span>offen</span></div>
+  <div class="steps">
+    <p><b>eng</b>Festgelegtes Thema, z. B. Replikation einer bestimmten Studie</p>
+    <p><b>dazwischen</b>Themenliste mit eigener Fragestellung</p>
+    <p><b>offen</b>Fragestellung kommt von Praxispartnern oder wird selbst entwickelt</p>
+  </div>
+  <p class="source">Formatspinne: Institut für zeitgemäße Prüfungskultur</p>
+</section>
+
+<section class="slide">
+  <div class="axis-head"><h2>Hilfsmittel</h2><span class="axis-num">5 / 8</span></div>
+  <div class="track"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+  <div class="poles"><span>keine</span><span>multimedial</span></div>
+  <div class="steps">
+    <p><b>eng</b>Verteidigung ohne Hilfsmittel – bewusst ohne KI</p>
+    <p><b>dazwischen</b>KI für Planung und Recherche, mit Dokumentation</p>
+    <p><b>offen</b>KI, Software und Medien voll integriert – plus Reflexion</p>
+  </div>
+  <p class="source">Formatspinne: Institut für zeitgemäße Prüfungskultur</p>
+</section>
+
+<section class="slide">
+  <div class="axis-head"><h2>Sozialform</h2><span class="axis-num">6 / 8</span></div>
+  <div class="track"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+  <div class="poles"><span>einzeln</span><span>zusammen</span></div>
+  <div class="steps">
+    <p><b>eng</b>Klassische Einzelarbeit</p>
+    <p><b>dazwischen</b>Eigene Arbeit in einem gemeinsamen Projekt, z. B. geteilte Datenerhebung</p>
+    <p><b>offen</b>Gruppenarbeit mit ausgewiesenen Einzelanteilen</p>
+  </div>
+  <p class="source">Formatspinne: Institut für zeitgemäße Prüfungskultur</p>
+</section>
+
+<section class="slide">
+  <div class="axis-head"><h2>Produkt</h2><span class="axis-num">7 / 8</span></div>
+  <div class="track"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+  <div class="poles"><span>handschriftlich</span><span>multimedial</span></div>
+  <div class="steps">
+    <p><b>eng</b>Text als Monografie</p>
+    <p><b>dazwischen</b>Fachartikel plus Policy Brief oder Poster</p>
+    <p><b>offen</b>Podcast, Video, Comic, Exponat, Prototyp</p>
+  </div>
+  <p class="source">Formatspinne: Institut für zeitgemäße Prüfungskultur</p>
+</section>
+
+<section class="slide">
+  <div class="axis-head"><h2>Feedback</h2><span class="axis-num">8 / 8</span></div>
+  <div class="track"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+  <div class="poles"><span>summativ</span><span>formativ</span></div>
+  <div class="steps">
+    <p><b>eng</b>Eine Note am Ende</p>
+    <p><b>dazwischen</b>Rückmeldung auf Zwischenstände, z. B. Exposé oder Forschungsplan</p>
+    <p><b>offen</b>Portfolio mit Etappen, Peer-Feedback, Note erst am Schluss</p>
+  </div>
+  <p class="source">Formatspinne: Institut für zeitgemäße Prüfungskultur</p>
+</section>
+
+<div class="progress" id="progress"></div>
+<div class="counter" id="counter"></div>
+<a class="home" href="index.html">Übersicht</a>
+<div class="hint" id="hint">← → zum Blättern · F für Vollbild</div>
+
+<script>
+  // Spinne zeichnen
+  (function () {
+    var axes = ["Raum", "Zeit", "Material", "Aufgaben", "Hilfsmittel", "Sozialform", "Produkt", "Feedback"];
+    var classic = [4, 5, 4, 4, 3, 1, 2, 1];
+    var opened  = [4, 4, 4, 4, 4, 4, 4, 4];
+    var R = 160, n = axes.length, svg = document.getElementById("spider");
+    var ns = "http://www.w3.org/2000/svg";
+    function pt(i, v) { var a = -Math.PI / 2 + i * 2 * Math.PI / n; return [Math.cos(a) * R * v / 5, Math.sin(a) * R * v / 5]; }
+    function el(tag, attrs) { var e = document.createElementNS(ns, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); svg.appendChild(e); return e; }
+    for (var r = 1; r <= 5; r++) {
+      var ring = []; for (var i = 0; i < n; i++) ring.push(pt(i, r).join(","));
+      el("polygon", { points: ring.join(" "), fill: "none", stroke: "#e4e4e4", "stroke-width": 1 });
+    }
+    for (var i = 0; i < n; i++) {
+      var p = pt(i, 5); el("line", { x1: 0, y1: 0, x2: p[0], y2: p[1], stroke: "#e4e4e4", "stroke-width": 1 });
+      var l = pt(i, 6.1);
+      var t = el("text", { x: l[0], y: l[1], "text-anchor": Math.abs(l[0]) < 5 ? "middle" : (l[0] > 0 ? "start" : "end"), "dominant-baseline": "middle", "font-size": 15, fill: "#111", "font-family": "system-ui, sans-serif" });
+      t.textContent = axes[i];
+    }
+    function poly(vals, fill, stroke) {
+      var pts = vals.map(function (v, i) { return pt(i, v).join(","); }).join(" ");
+      el("polygon", { points: pts, fill: fill, stroke: stroke, "stroke-width": 2.5, "stroke-linejoin": "round" });
+    }
+    poly(opened, "rgba(47,91,234,0.10)", "#2f5bea");
+    poly(classic, "rgba(0,0,0,0.06)", "#999");
+  })();
+
+  // Navigation
+  var slides = Array.prototype.slice.call(document.querySelectorAll(".slide"));
+  var idx = 0;
+  function show(i) {
+    idx = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach(function (s, j) { s.classList.toggle("active", j === idx); });
+    document.getElementById("progress").style.width = ((idx + 1) / slides.length * 100) + "%";
+    document.getElementById("counter").textContent = (idx + 1) + " / " + slides.length;
+    if (location.hash !== "#" + (idx + 1)) history.replaceState(null, "", "#" + (idx + 1));
+  }
+  function hideHint() { document.getElementById("hint").style.opacity = 0; }
+  document.addEventListener("keydown", function (e) {
+    if (["ArrowRight", "ArrowDown", "PageDown", " ", "Enter"].indexOf(e.key) > -1) { e.preventDefault(); show(idx + 1); hideHint(); }
+    else if (["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].indexOf(e.key) > -1) { e.preventDefault(); show(idx - 1); hideHint(); }
+    else if (e.key === "Home") show(0);
+    else if (e.key === "End") show(slides.length - 1);
+    else if (e.key === "f" || e.key === "F") {
+      if (!document.fullscreenElement) { document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); }
+      else { document.exitFullscreen && document.exitFullscreen(); }
+    }
+  });
+  document.addEventListener("click", function (e) {
+    if (e.target.closest("a")) return;
+    show(e.clientX > window.innerWidth / 3 ? idx + 1 : idx - 1); hideHint();
+  });
+  var tx = null;
+  document.addEventListener("touchstart", function (e) { tx = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener("touchend", function (e) {
+    if (tx === null) return; var dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 50) { show(dx < 0 ? idx + 1 : idx - 1); hideHint(); } tx = null;
+  });
+  var start = parseInt(location.hash.slice(1), 10);
+  show(isNaN(start) ? 0 : start - 1);
+  setTimeout(hideHint, 4000);
+</script>
+</body>
+</html>
