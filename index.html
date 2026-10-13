@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Abschlussarbeiten und Prüfungskultur im Kontext von KI</title>
+<style>
+  :root { --bg:#fff; --ink:#111; --muted:#8a8a8a; --line:#e4e4e4; --accent:#2f5bea; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--ink); font-family:system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif; -webkit-font-smoothing:antialiased; }
+  main { max-width:980px; margin:0 auto; padding:12vh 16px 8vh; }
+  .label { font-size:.85rem; text-transform:uppercase; letter-spacing:.14em; color:var(--muted); margin-bottom:16px; }
+  h1 { font-size:clamp(2rem,5vw,3.6rem); line-height:1.08; letter-spacing:-.02em; }
+  .lead { margin-top:20px; font-size:clamp(1rem,2vw,1.3rem); color:#444; max-width:640px; line-height:1.5; }
+  .cards { display:grid; grid-template-columns:repeat(4,1fr); gap:24px; margin-top:56px; }
+  .card { display:block; text-decoration:none; color:inherit; border-top:3px solid var(--ink); padding-top:20px; transition:border-color .2s; }
+  .card:hover { border-color:var(--accent); }
+  .card .num { font-size:.85rem; color:var(--muted); }
+  .card h2 { font-size:1.6rem; margin-top:8px; letter-spacing:-.01em; }
+  .card p { margin-top:10px; color:#444; line-height:1.5; }
+  .card .go { display:inline-block; margin-top:16px; color:var(--accent); font-weight:600; }
+  .zufall { display:inline-block; margin-top:28px; font-weight:600; color:var(--ink); }
+  footer { margin-top:80px; font-size:.85rem; color:var(--muted); line-height:1.6; }
+  footer a { color:inherit; }
+  @media (max-width:900px) { .cards { grid-template-columns:1fr 1fr; } }
+  @media (max-width:560px) { .cards { grid-template-columns:1fr; } main { padding-top:8vh; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="label">Workshop-Material</div>
+  <h1>Abschlussarbeiten und Prüfungskultur im Kontext von KI</h1>
+  <p class="lead">Präsentation, interaktive Formatspinne, Prompt-Generator und 28 Formatideen, um eigene Prüfungsformate zu entwickeln.</p>
+
+  <div class="cards">
+    <a class="card" href="praesentation.html">
+      <div class="num">1</div>
+      <h2>Präsentation</h2>
+      <p>Impuls zu KI, Lernen und Prüfen – und die acht Achsen der Formatspinne.</p>
+      <span class="go">Öffnen →</span>
+    </a>
+    <a class="card" href="formatspinne.html">
+      <div class="num">2</div>
+      <h2>Formatspinne</h2>
+      <p>Ein Prüfungsformat auf acht Achsen einstellen und als Netzdiagramm sehen.</p>
+      <span class="go">Ausprobieren →</span>
+    </a>
+    <a class="card" href="prompt.html">
+      <div class="num">3</div>
+      <h2>Prompt-Generator</h2>
+      <p>Fach und Thema eingeben, mit / ohne / über KI wählen, Spinne einstellen – Prompt kopieren.</p>
+      <span class="go">Prompt bauen →</span>
+    </a>
+    <a class="card" href="formate.html">
+      <div class="num">4</div>
+      <h2>28 Formate</h2>
+      <p>Kurz benannte Prüfungsformate mit KI – filterbar nach mit, ohne und über KI.</p>
+      <span class="go">Stöbern →</span>
+    </a>
+  </div>
+  <a class="zufall" href="zufall.html">Oder: eine zufällige Formatidee ziehen →</a>
+
+
+  <footer>
+    Die Formatspinne ist ein Reflexionstool des <a href="https://pruefungskultur.de/ressource/formatspinne/">Instituts für zeitgemäße Prüfungskultur</a>. Original-Tool: <a href="https://reflexionstool.pruefungskultur.de/">reflexionstool.pruefungskultur.de</a>.<br>
+    Material: ebildungslabor
+  </footer>
+</main>
+</body>
+</html>

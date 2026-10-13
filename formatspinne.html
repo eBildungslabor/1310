@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Formatspinne</title>
+<style>
+  :root { --bg:#fff; --ink:#111; --muted:#8a8a8a; --line:#e4e4e4; --accent:#2f5bea; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--ink); font-family:system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif; -webkit-font-smoothing:antialiased; }
+  main { max-width:1100px; margin:0 auto; padding:6vh 16px 8vh; }
+  nav { display:flex; gap:20px; font-size:.9rem; margin-bottom:6vh; flex-wrap:wrap; }
+  nav a { color:var(--muted); text-decoration:none; }
+  nav a:hover, nav a.on { color:var(--ink); }
+  nav a.on { font-weight:600; }
+  .label { font-size:.85rem; text-transform:uppercase; letter-spacing:.14em; color:var(--muted); margin-bottom:12px; }
+  h1 { font-size:clamp(2rem,4.5vw,3.2rem); letter-spacing:-.02em; line-height:1.1; }
+  .lead { margin-top:14px; color:#444; line-height:1.5; max-width:680px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:48px; margin-top:40px; align-items:start; }
+  svg { width:100%; height:auto; }
+  .axis { padding:14px 0; border-bottom:1px solid var(--line); }
+  .axis-top { display:flex; justify-content:space-between; align-items:baseline; }
+  .axis-top b { font-size:1.05rem; }
+  .axis-top span { font-size:.85rem; color:var(--muted); font-variant-numeric:tabular-nums; }
+  input[type=range] { width:100%; margin:10px 0 4px; accent-color:var(--accent); }
+  .poles { display:flex; justify-content:space-between; font-size:.85rem; color:var(--muted); }
+  .poles span:last-child { color:var(--accent); }
+  .buttons { display:flex; flex-wrap:wrap; gap:10px; margin-top:24px; }
+  button, .btn { font:inherit; font-size:.95rem; border:2px solid var(--ink); background:var(--bg); color:var(--ink); border-radius:999px; padding:.55em 1.1em; cursor:pointer; text-decoration:none; display:inline-block; }
+  button:hover { background:#f4f4f4; }
+  .btn.primary { background:var(--ink); color:#fff; }
+  .btn.primary:hover { background:var(--accent); border-color:var(--accent); }
+  .legend { display:flex; gap:20px; font-size:.85rem; color:#444; margin-top:12px; flex-wrap:wrap; }
+  .legend i { display:inline-block; width:20px; height:4px; vertical-align:middle; margin-right:6px; }
+  .note { margin-top:20px; font-size:.9rem; color:#444; line-height:1.5; }
+  footer { margin-top:64px; font-size:.85rem; color:var(--muted); line-height:1.6; }
+  footer a { color:inherit; }
+  @media (max-width:820px) { .grid { grid-template-columns:1fr; gap:24px; } }
+</style>
+</head>
+<body>
+<main>
+  <nav>
+    <a href="index.html">Übersicht</a>
+    <a href="praesentation.html">1 Präsentation</a>
+    <a href="formatspinne.html" class="on">2 Formatspinne</a>
+    <a href="prompt.html">3 Prompt-Generator</a>
+    <a href="formate.html">4 Formate</a>
+    <a href="zufall.html">Zufallsidee</a>
+  </nav>
+
+  <div class="label">Reflexionstool</div>
+  <h1>Formatspinne</h1>
+  <p class="lead">Acht Achsen eines Prüfungsformats, jeweils von eng (1) bis offen (5). Ziel ist nicht die größte Fläche, sondern die Einstellung, die zum Lernziel passt.</p>
+
+  <div class="grid">
+    <div>
+      <svg id="spider" viewBox="-300 -215 600 430" role="img" aria-label="Netzdiagramm der Formatspinne"></svg>
+    </div>
+    <div>
+      <div id="axes"></div>
+      <div class="buttons">
+        <button id="b-reset">Alles auf 3</button>
+        <a class="btn primary" id="b-prompt" href="prompt.html">Mit diesen Werten zum Prompt →</a>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Formatspinne nach dem <a href="https://pruefungskultur.de/ressource/formatspinne/">Institut für zeitgemäße Prüfungskultur</a> · Original-Tool: <a href="https://reflexionstool.pruefungskultur.de/">reflexionstool.pruefungskultur.de</a>
+  </footer>
+</main>
+
+<script>
+  var AXES = [
+    { name: "Raum", left: "festgelegt", right: "frei wählbar" },
+    { name: "Zeitintervall", left: "eng", right: "weit" },
+    { name: "Material", left: "nichts", right: "alles" },
+    { name: "Aufgaben", left: "geschlossen", right: "offen" },
+    { name: "Hilfsmittel", left: "keine", right: "multimedial" },
+    { name: "Sozialform", left: "einzeln", right: "zusammen" },
+    { name: "Produkt", left: "handschriftlich", right: "multimedial" },
+    { name: "Feedback", left: "summativ", right: "formativ" }
+  ];
+  var values = [3, 3, 3, 3, 3, 3, 3, 3];
+
+  // Werte aus URL (?s=45443121)
+  var m = location.search.match(/[?&]s=([1-5]{8})/);
+  if (m) values = m[1].split("").map(Number);
+
+  var axesEl = document.getElementById("axes");
+  AXES.forEach(function (a, i) {
+    var d = document.createElement("div");
+    d.className = "axis";
+    d.innerHTML = '<div class="axis-top"><b>' + a.name + '</b><span id="v' + i + '"></span></div>' +
+      '<input type="range" min="1" max="5" step="1" id="r' + i + '" aria-label="' + a.name + '">' +
+      '<div class="poles"><span>' + a.left + '</span><span>' + a.right + '</span></div>';
+    axesEl.appendChild(d);
+    var r = d.querySelector("input");
+    r.addEventListener("input", function () { values[i] = Number(r.value); render(); });
+  });
+
+  var svg = document.getElementById("spider"), ns = "http://www.w3.org/2000/svg", R = 160, n = AXES.length;
+  function pt(i, v) { var a = -Math.PI / 2 + i * 2 * Math.PI / n; return [Math.cos(a) * R * v / 5, Math.sin(a) * R * v / 5]; }
+  function el(tag, attrs, txt) { var e = document.createElementNS(ns, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (txt) e.textContent = txt; svg.appendChild(e); return e; }
+  function poly(vals, fill, stroke, dash) {
+    el("polygon", { points: vals.map(function (v, i) { return pt(i, v).join(","); }).join(" "), fill: fill, stroke: stroke, "stroke-width": 2.5, "stroke-linejoin": "round", "stroke-dasharray": dash || "" });
+  }
+  function word(v) { return ["", "sehr eng", "eher eng", "mittel", "eher offen", "sehr offen"][v]; }
+
+  function render() {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    for (var r = 1; r <= 5; r++) {
+      var ring = []; for (var i = 0; i < n; i++) ring.push(pt(i, r).join(","));
+      el("polygon", { points: ring.join(" "), fill: "none", stroke: "#e4e4e4", "stroke-width": 1 });
+    }
+    for (var i = 0; i < n; i++) {
+      var p = pt(i, 5); el("line", { x1: 0, y1: 0, x2: p[0], y2: p[1], stroke: "#e4e4e4", "stroke-width": 1 });
+      var l = pt(i, 6.1);
+      el("text", { x: l[0], y: l[1], "text-anchor": Math.abs(l[0]) < 5 ? "middle" : (l[0] > 0 ? "start" : "end"), "dominant-baseline": "middle", "font-size": 15, fill: "#111", "font-family": "system-ui, sans-serif" }, AXES[i].name);
+    }
+    poly(values, "rgba(47,91,234,0.12)", "#2f5bea");
+    values.forEach(function (v, i) {
+      var p = pt(i, v); el("circle", { cx: p[0], cy: p[1], r: 5, fill: "#2f5bea" });
+      document.getElementById("r" + i).value = v;
+      document.getElementById("v" + i).textContent = v + " · " + word(v);
+    });
+    var code = values.join("");
+    document.getElementById("b-prompt").href = "prompt.html?s=" + code;
+    history.replaceState(null, "", "?s=" + code);
+  }
+
+  document.getElementById("b-reset").onclick = function () { values = [3,3,3,3,3,3,3,3]; render(); };
+  render();
+</script>
+</body>
+</html>

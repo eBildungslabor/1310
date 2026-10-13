@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prüfungskultur im Kontext von KI</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --ink: #111111;
+    --muted: #8a8a8a;
+    --line: #e4e4e4;
+    --accent: #2f5bea;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--ink); }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  .slide {
+    position: absolute; inset: 0;
+    display: none;
+    flex-direction: column; justify-content: center;
+    padding: 6vh 8vw;
+  }
+  .slide.active { display: flex; }
+  .center { align-items: center; text-align: center; }
+
+  h1 { font-size: clamp(2.2rem, 5.5vw, 5rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.08; }
+  h2 { font-size: clamp(1.8rem, 4vw, 3.6rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.12; }
+  .big { font-size: clamp(3rem, 9vw, 9rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+  .sub { margin-top: 2.5vh; font-size: clamp(1rem, 2vw, 1.7rem); color: var(--muted); font-weight: 400; }
+  .label { font-size: clamp(0.8rem, 1.2vw, 1rem); text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin-bottom: 2vh; }
+  .q { color: var(--accent); }
+
+  /* Räume */
+  .rooms { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3vw; margin-top: 6vh; }
+  .rooms div { border-top: 3px solid var(--ink); padding-top: 2vh; font-size: clamp(1.2rem, 2.4vw, 2rem); font-weight: 600; }
+  .rooms span { display: block; font-size: clamp(0.8rem, 1.2vw, 1rem); color: var(--muted); font-weight: 400; margin-bottom: 1vh; text-transform: uppercase; letter-spacing: 0.12em; }
+
+  /* Lernen ⇄ Prüfen */
+  .pair { display: flex; align-items: center; justify-content: center; gap: 4vw; margin-top: 2vh; }
+  .pair .word { font-size: clamp(2.4rem, 7vw, 7rem); font-weight: 700; letter-spacing: -0.03em; }
+  .pair svg { width: clamp(70px, 10vw, 160px); height: auto; }
+
+  /* Drei Felder */
+  .fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3vw; margin-top: 6vh; }
+  .field h3 { font-size: clamp(1.4rem, 3vw, 2.6rem); font-weight: 700; letter-spacing: -0.02em; padding-bottom: 1.5vh; border-bottom: 3px solid var(--ink); }
+  .field h3 em { font-style: normal; color: var(--accent); }
+  .field p { margin-top: 2vh; font-size: clamp(1rem, 1.6vw, 1.4rem); line-height: 1.45; color: #333; }
+
+  /* Bausteine */
+  .chips { display: flex; flex-wrap: wrap; gap: 1.2vw; margin-top: 5vh; max-width: 70vw; }
+  .chips span { border: 2px solid var(--ink); border-radius: 999px; padding: 0.6em 1.2em; font-size: clamp(0.9rem, 1.6vw, 1.4rem); font-weight: 500; }
+  .chips span.ki { border-color: var(--accent); color: var(--accent); }
+
+  /* Spinne */
+  .spider-wrap { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 4vw; }
+  .spider-wrap svg { width: 100%; max-height: 70vh; }
+  .legend { margin-top: 3vh; display: flex; flex-direction: column; gap: 1.2vh; font-size: clamp(0.9rem, 1.4vw, 1.2rem); color: #333; }
+  .legend i { display: inline-block; width: 1.4em; height: 0.35em; vertical-align: middle; margin-right: 0.6em; }
+
+  /* Achsen-Folien */
+  .axis-head { display: flex; align-items: baseline; justify-content: space-between; gap: 2vw; }
+  .axis-num { font-size: clamp(0.9rem, 1.4vw, 1.2rem); color: var(--muted); }
+  .track { position: relative; margin: 7vh 0 4vh; height: 4px; background: var(--line); border-radius: 2px; }
+  .track::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, var(--ink), var(--accent)); border-radius: 2px; }
+  .track .dot { position: absolute; top: 50%; width: 18px; height: 18px; border-radius: 50%; background: var(--bg); border: 3px solid var(--ink); transform: translate(-50%, -50%); z-index: 1; }
+  .track .dot:nth-child(1) { left: 0; }
+  .track .dot:nth-child(2) { left: 50%; }
+  .track .dot:nth-child(3) { left: 100%; border-color: var(--accent); }
+  .poles { display: flex; justify-content: space-between; font-size: clamp(1rem, 1.8vw, 1.5rem); font-weight: 600; margin-top: -2vh; }
+  .poles span:last-child { color: var(--accent); }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3vw; margin-top: 5vh; }
+  .steps p { font-size: clamp(1rem, 1.7vw, 1.45rem); line-height: 1.45; color: #222; }
+  .steps p b { display: block; font-size: clamp(0.75rem, 1.1vw, 0.95rem); text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); font-weight: 500; margin-bottom: 1vh; }
+  .steps p:nth-child(2) { text-align: center; }
+  .steps p:nth-child(3) { text-align: right; }
+
+  .source { position: absolute; left: 8vw; bottom: 4vh; font-size: clamp(0.7rem, 1vw, 0.85rem); color: var(--muted); }
+
+  /* Navigation */
+  .progress { position: fixed; left: 0; bottom: 0; height: 3px; background: var(--ink); transition: width 0.25s ease; }
+  .counter { position: fixed; right: 2vw; bottom: 2vh; font-size: 0.8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .home { position: fixed; left: 2vw; bottom: 2vh; font-size: 0.8rem; color: var(--muted); text-decoration: none; }
+  .home:hover { color: var(--ink); }
+  .hint { position: fixed; left: 50%; bottom: 2vh; transform: translateX(-50%); font-size: 0.8rem; color: var(--muted); transition: opacity 0.6s; }
+
+  @media (max-width: 760px) {
+    .rooms, .fields, .steps, .spider-wrap { grid-template-columns: 1fr; }
+    .steps p:nth-child(2), .steps p:nth-child(3) { text-align: left; }
+    .slide { padding: 6vh 16px; overflow-y: auto; justify-content: flex-start; padding-top: 10vh; }
+    .chips { max-width: 100%; }
+  }
+  .invite { display:grid; grid-template-columns:1fr auto; gap:5vw; align-items:center; }
+  .invite .qr { width:clamp(160px, 22vw, 300px); height:auto; }
+  .go-link { display:inline-block; margin-top:3vh; font-size:clamp(1rem,1.8vw,1.5rem); font-weight:600; color:var(--accent); text-decoration:none; word-break:break-all; }
+  @media (max-width: 760px) { .invite { grid-template-columns:1fr; } }
+  .shifts { list-style:none; margin-top:5vh; display:flex; flex-direction:column; gap:4.5vh; }
+  .shifts li { display:grid; grid-template-columns:clamp(2.2rem,4.5vw,4rem) 1fr; column-gap:2.5vw; align-items:baseline; border-top:3px solid var(--ink); padding-top:2.2vh; }
+  .shifts .n { grid-row:span 2; font-size:clamp(1.6rem,3.4vw,3rem); font-weight:700; color:var(--accent); line-height:1; }
+  .shifts span:not(.n) { font-size:clamp(1rem,1.8vw,1.5rem); color:var(--muted); }
+  .shifts b { font-size:clamp(1.6rem,3.4vw,3rem); letter-spacing:-.02em; line-height:1.1; }
+  .shrug { font-size:clamp(3rem,11vw,11rem); font-weight:500; letter-spacing:-.02em; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<!-- 1 Titel -->
+<section class="slide center">
+  <h1>Prüfungskultur<br>im Kontext von KI</h1>
+  <p class="sub">Abschlussarbeiten und weitere schriftliche Arbeiten</p>
+</section>
+
+<!-- Shruggie -->
+<section class="slide center">
+  <div class="shrug">¯\_(ツ)_/¯</div>
+</section>
+
+<!-- 2 KI? -->
+<section class="slide center">
+  <div class="big">KI<span class="q">?</span></div>
+</section>
+
+<!-- 3 Technik, keine Magie -->
+<section class="slide">
+  <h2>KI ist Technik –<br><span class="q">keine Magie.</span></h2>
+</section>
+
+<!-- 4 Sparringspartner -->
+<section class="slide">
+  <h2>Lernförderliche Nutzung<br>als Sparringspartner<span class="q">?</span></h2>
+</section>
+
+<!-- 5 Nicht neutral -->
+<section class="slide">
+  <h2>Technik ist<br><span class="q">nicht neutral.</span></h2>
+</section>
+
+<!-- 6 Murmelrunde -->
+<section class="slide center">
+  <div class="label">Murmelrunde</div>
+  <h2>Wie erlebst du KI<br>in der Bildung<span class="q">?</span></h2>
+</section>
+
+<!-- 6 Pädagogische Verantwortung -->
+<section class="slide">
+  <div class="label">Pädagogische Verantwortung</div>
+  <h2>Räume schaffen</h2>
+  <div class="rooms">
+    <div><span>Räume für</span>Entwicklung</div>
+    <div><span>Räume für</span>Reflexion</div>
+    <div><span>Räume für</span>Gestaltung</div>
+  </div>
+</section>
+
+<!-- 7 Lernen ⇄ Prüfen -->
+<section class="slide center">
+  <div class="pair">
+    <span class="word">Lernen</span>
+    <svg viewBox="0 0 120 60" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M8 20 H108 M94 8 L108 20 L94 32"/>
+      <path d="M112 42 H12 M26 30 L12 42 L26 54" stroke="#2f5bea"/>
+    </svg>
+    <span class="word">Prüfen</span>
+  </div>
+  <p class="sub">Verändertes Lernen braucht veränderte Prüfungen – und umgekehrt.</p>
+</section>
+
+<!-- 8 Drei Felder -->
+<section class="slide">
+  <div class="label">Drei Felder</div>
+  <div class="fields">
+    <div class="field">
+      <h3>Prüfen <em>mit</em> KI</h3>
+      <p>KI darf als Werkzeug genutzt werden – die Nutzung wird dokumentiert und reflektiert.</p>
+    </div>
+    <div class="field">
+      <h3>Prüfen <em>ohne</em> KI</h3>
+      <p>Bewusst Situationen gestalten, in denen KI keine Rolle spielt.</p>
+    </div>
+    <div class="field">
+      <h3>Prüfen <em>über</em> KI</h3>
+      <p>Untersuchen, wie KI im jeweiligen Fachgebiet verwendet wird und werden kann.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 9 Der Trick -->
+<section class="slide">
+  <div class="label">Der Trick</div>
+  <h2>Nicht nur fragen: KI – ja oder nein<span class="q">?</span><br>Sondern weiten und öffnen.</h2>
+  <div class="chips">
+    <span>Raum</span><span>Zeit</span><span>Material</span><span>Aufgaben</span>
+    <span class="ki">Hilfsmittel</span><span>Sozialform</span><span>Produkt</span><span>Feedback</span>
+  </div>
+</section>
+
+<!-- 10 Formatspinne -->
+<section class="slide">
+  <div class="spider-wrap">
+    <div>
+      <div class="label">Reflexionstool</div>
+      <h2>Die Formatspinne</h2>
+      <p class="sub">Acht Stellschrauben eines Prüfungsformats – von eng (innen) bis offen (außen). Ziel ist nicht die größte Fläche, sondern die passende.</p>
+      <div class="legend">
+        <span><i style="background:#2f5bea"></i>Beispiel: ein mögliches Format</span>
+      </div>
+    </div>
+    <svg id="spider" viewBox="-290 -210 580 420" role="img" aria-label="Netzdiagramm mit acht Achsen"></svg>
+  </div>
+  <p class="source">Formatspinne: Institut für zeitgemäße Prüfungskultur · pruefungskultur.de/ressource/formatspinne</p>
+</section>
+
+<!-- 11–18 Achsen -->
+<section class="slide">
+  <div class="axis-head"><h2>Raum</h2><span class="axis-num">1 / 8</span></div>
+  <div class="track"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+  <div class="poles"><span>festgelegt</span><span>frei wählbar</span></div>
+  <div class="steps">
+    <p><b>eng</b>Schreibphase oder Verteidigung unter Aufsicht im Prüfungsraum</p>
+    <p><b>dazwischen</b>Arbeiten von überall, Verteidigung vor Ort</p>
+    <p><b>offen</b>Arbeit beim Praxispartner, im Feld, in der Community</p>
+  </div>
+  <p class="source">Formatspinne: Institut für zeitgemäße Prüfungskultur</p>
+</section>
+
+<section class="slide">
+  <div class="axis-head"><h2>Zeitintervall</h2><span class="axis-num">2 / 8</span></div>
+  <div class="track"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+  <div class="poles"><span>eng</span><span>weit</span></div>
+  <div class="steps">
+    <p><b>eng</b>3-Minuten-Pitch, 25-minütiges Prüfungsgespräch</p>
+    <p><b>dazwischen</b>Bearbeitungszeit von einigen Wochen</p>
+    <p><b>offen</b>Studienbegleitendes Portfolio über mehrere Semester</p>
+  </div>
+  <p class="source">Formatspinne: Institut für zeitgemäße Prüfungskultur</p>
+</section>
+
+<section class="slide">
+  <div class="axis-head"><h2>Material</h2><span class="axis-num">3 / 8</span></div>
+  <div class="track"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+  <div class="poles"><span>nichts</span><span>alles</span></div>
+  <div class="steps">
+    <p><b>eng</b>Fachgespräch ohne Unterlagen</p>
+    <p><b>dazwischen</b>Vorgegebener Quellenkorpus oder Datensatz</p>
+    <p><b>offen</b>Freie Recherche, eigene Daten, alle Quellen</p>
+  </div>
+  <p class="source">Formatspinne: Institut für zeitgemäße Prüfungskultur</p>
+</section>
+
+<section class="slide">
+  <div class="axis-head"><h2>Aufgaben</h2><span class="axis-num">4 / 8</span></div>
+  <div class="track"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+  <div class="poles"><span>geschlossen</span><span>offen</span></div>
+  <div class="steps">
+    <p><b>eng</b>Festgelegtes Thema, z. B. Replikation einer bestimmten Studie</p>
+    <p><b>dazwischen</b>Themenliste mit eigener Fragestellung</p>
+    <p><b>offen</b>Fragestellung kommt von Praxispartnern oder wird selbst entwickelt</p>
+  </div>
+  <p class="source">Formatspinne: Institut für zeitgemäße Prüfungskultur</p>
+</section>
+
+<section class="slide">
+  <div class="axis-head"><h2>Hilfsmittel</h2><span class="axis-num">5 / 8</span></div>
+  <div class="track"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+  <div class="poles"><span>keine</span><span>multimedial</span></div>
+  <div class="steps">
+    <p><b>eng</b>Verteidigung ohne Hilfsmittel – bewusst ohne KI</p>
+    <p><b>dazwischen</b>KI für Planung und Recherche, mit Dokumentation</p>
+    <p><b>offen</b>KI, Software und Medien voll integriert – plus Reflexion</p>
+  </div>
+  <p class="source">Formatspinne: Institut für zeitgemäße Prüfungskultur</p>
+</section>
+
+<section class="slide">
+  <div class="axis-head"><h2>Sozialform</h2><span class="axis-num">6 / 8</span></div>
+  <div class="track"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+  <div class="poles"><span>einzeln</span><span>zusammen</span></div>
+  <div class="steps">
+    <p><b>eng</b>Einzelarbeit</p>
+    <p><b>dazwischen</b>Eigene Arbeit in einem gemeinsamen Projekt, z. B. geteilte Datenerhebung</p>
+    <p><b>offen</b>Gruppenarbeit mit ausgewiesenen Einzelanteilen</p>
+  </div>
+  <p class="source">Formatspinne: Institut für zeitgemäße Prüfungskultur</p>
+</section>
+
+<section class="slide">
+  <div class="axis-head"><h2>Produkt</h2><span class="axis-num">7 / 8</span></div>
+  <div class="track"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+  <div class="poles"><span>handschriftlich</span><span>multimedial</span></div>
+  <div class="steps">
+    <p><b>eng</b>Text als Monografie</p>
+    <p><b>dazwischen</b>Fachartikel plus Policy Brief oder Poster</p>
+    <p><b>offen</b>Podcast, Video, Comic, Exponat, Prototyp</p>
+  </div>
+  <p class="source">Formatspinne: Institut für zeitgemäße Prüfungskultur</p>
+</section>
+
+<section class="slide">
+  <div class="axis-head"><h2>Feedback</h2><span class="axis-num">8 / 8</span></div>
+  <div class="track"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+  <div class="poles"><span>summativ</span><span>formativ</span></div>
+  <div class="steps">
+    <p><b>eng</b>Eine Note am Ende</p>
+    <p><b>dazwischen</b>Rückmeldung auf Zwischenstände, z. B. Exposé oder Forschungsplan</p>
+    <p><b>offen</b>Portfolio mit Etappen, Peer-Feedback, Note erst am Schluss</p>
+  </div>
+  <p class="source">Formatspinne: Institut für zeitgemäße Prüfungskultur</p>
+</section>
+
+<!-- Formatspinne als Ganzes -->
+<section class="slide">
+  <div class="spider-wrap">
+    <div>
+      <div class="label">Formatspinne</div>
+      <h2>Welche Ausprägungen<br>fallen dir ein<span class="q">?</span></h2>
+      <p class="sub">Acht Achsen, jeweils von eng bis offen – für dein Fach, dein Thema, deine Studierenden.</p>
+    </div>
+    <svg class="spider-empty" viewBox="-380 -215 760 430" style="overflow:visible" role="img" aria-label="Leere Formatspinne mit acht Achsen"></svg>
+  </div>
+  <p class="source">Formatspinne: Institut für zeitgemäße Prüfungskultur · pruefungskultur.de/ressource/formatspinne</p>
+</section>
+
+<!-- Bonus -->
+<section class="slide">
+  <div class="label">Bonus</div>
+  <h2>Lernen ist mehr<br>als <span class="q">Kognition.</span></h2>
+</section>
+
+<!-- Drei Verschiebungen -->
+<section class="slide">
+  <div class="label">Worum es eigentlich geht</div>
+  <ol class="shifts">
+    <li><span class="n">1</span><span>Von Zertifikatsvergabe</span><b>zu echtem Lernen</b></li>
+    <li><span class="n">2</span><span>Von Isolation</span><b>zu authentischen Situationen</b></li>
+    <li><span class="n">3</span><span>Von der „Schädelgrenze“</span><b>zu erweiterter Kognition</b></li>
+  </ol>
+</section>
+
+<!-- Einladung -->
+<section class="slide">
+  <div class="invite">
+    <div>
+      <div class="label">Einladung</div>
+      <h2>Prüfungsformate generieren –<br><span class="q">in Interaktion mit KI.</span></h2>
+      <p class="sub">Fach und Thema eingeben, mit / ohne / über KI wählen, Spinne einstellen – Prompt kopieren.</p>
+      <a class="go-link" href="prompt.html">ebildungslabor.github.io/1310/prompt.html</a>
+    </div>
+    <svg class="qr" viewBox="0 0 37 37" shape-rendering="crispEdges" role="img" aria-label="QR-Code zum Prompt-Generator"><rect width="37" height="37" fill="#fff"/><path d="M2,2h1v1h-1zM3,2h1v1h-1zM4,2h1v1h-1zM5,2h1v1h-1zM6,2h1v1h-1zM7,2h1v1h-1zM8,2h1v1h-1zM12,2h1v1h-1zM13,2h1v1h-1zM21,2h1v1h-1zM22,2h1v1h-1zM24,2h1v1h-1zM25,2h1v1h-1zM28,2h1v1h-1zM29,2h1v1h-1zM30,2h1v1h-1zM31,2h1v1h-1zM32,2h1v1h-1zM33,2h1v1h-1zM34,2h1v1h-1zM2,3h1v1h-1zM8,3h1v1h-1zM11,3h1v1h-1zM12,3h1v1h-1zM14,3h1v1h-1zM17,3h1v1h-1zM20,3h1v1h-1zM22,3h1v1h-1zM24,3h1v1h-1zM26,3h1v1h-1zM28,3h1v1h-1zM34,3h1v1h-1zM2,4h1v1h-1zM4,4h1v1h-1zM5,4h1v1h-1zM6,4h1v1h-1zM8,4h1v1h-1zM10,4h1v1h-1zM12,4h1v1h-1zM13,4h1v1h-1zM14,4h1v1h-1zM16,4h1v1h-1zM21,4h1v1h-1zM22,4h1v1h-1zM23,4h1v1h-1zM28,4h1v1h-1zM30,4h1v1h-1zM31,4h1v1h-1zM32,4h1v1h-1zM34,4h1v1h-1zM2,5h1v1h-1zM4,5h1v1h-1zM5,5h1v1h-1zM6,5h1v1h-1zM8,5h1v1h-1zM10,5h1v1h-1zM11,5h1v1h-1zM12,5h1v1h-1zM14,5h1v1h-1zM17,5h1v1h-1zM20,5h1v1h-1zM21,5h1v1h-1zM24,5h1v1h-1zM26,5h1v1h-1zM28,5h1v1h-1zM30,5h1v1h-1zM31,5h1v1h-1zM32,5h1v1h-1zM34,5h1v1h-1zM2,6h1v1h-1zM4,6h1v1h-1zM5,6h1v1h-1zM6,6h1v1h-1zM8,6h1v1h-1zM10,6h1v1h-1zM11,6h1v1h-1zM12,6h1v1h-1zM13,6h1v1h-1zM14,6h1v1h-1zM15,6h1v1h-1zM16,6h1v1h-1zM17,6h1v1h-1zM18,6h1v1h-1zM22,6h1v1h-1zM23,6h1v1h-1zM25,6h1v1h-1zM26,6h1v1h-1zM28,6h1v1h-1zM30,6h1v1h-1zM31,6h1v1h-1zM32,6h1v1h-1zM34,6h1v1h-1zM2,7h1v1h-1zM8,7h1v1h-1zM10,7h1v1h-1zM11,7h1v1h-1zM12,7h1v1h-1zM14,7h1v1h-1zM15,7h1v1h-1zM16,7h1v1h-1zM19,7h1v1h-1zM20,7h1v1h-1zM21,7h1v1h-1zM23,7h1v1h-1zM24,7h1v1h-1zM26,7h1v1h-1zM28,7h1v1h-1zM34,7h1v1h-1zM2,8h1v1h-1zM3,8h1v1h-1zM4,8h1v1h-1zM5,8h1v1h-1zM6,8h1v1h-1zM7,8h1v1h-1zM8,8h1v1h-1zM10,8h1v1h-1zM12,8h1v1h-1zM14,8h1v1h-1zM16,8h1v1h-1zM18,8h1v1h-1zM20,8h1v1h-1zM22,8h1v1h-1zM24,8h1v1h-1zM26,8h1v1h-1zM28,8h1v1h-1zM29,8h1v1h-1zM30,8h1v1h-1zM31,8h1v1h-1zM32,8h1v1h-1zM33,8h1v1h-1zM34,8h1v1h-1zM10,9h1v1h-1zM11,9h1v1h-1zM13,9h1v1h-1zM18,9h1v1h-1zM20,9h1v1h-1zM21,9h1v1h-1zM22,9h1v1h-1zM23,9h1v1h-1zM24,9h1v1h-1zM2,10h1v1h-1zM4,10h1v1h-1zM5,10h1v1h-1zM6,10h1v1h-1zM7,10h1v1h-1zM8,10h1v1h-1zM11,10h1v1h-1zM15,10h1v1h-1zM16,10h1v1h-1zM19,10h1v1h-1zM20,10h1v1h-1zM21,10h1v1h-1zM24,10h1v1h-1zM26,10h1v1h-1zM28,10h1v1h-1zM29,10h1v1h-1zM30,10h1v1h-1zM31,10h1v1h-1zM32,10h1v1h-1zM2,11h1v1h-1zM3,11h1v1h-1zM4,11h1v1h-1zM5,11h1v1h-1zM6,11h1v1h-1zM7,11h1v1h-1zM9,11h1v1h-1zM11,11h1v1h-1zM12,11h1v1h-1zM13,11h1v1h-1zM15,11h1v1h-1zM18,11h1v1h-1zM19,11h1v1h-1zM20,11h1v1h-1zM21,11h1v1h-1zM22,11h1v1h-1zM25,11h1v1h-1zM28,11h1v1h-1zM29,11h1v1h-1zM31,11h1v1h-1zM32,11h1v1h-1zM33,11h1v1h-1zM34,11h1v1h-1zM2,12h1v1h-1zM3,12h1v1h-1zM4,12h1v1h-1zM8,12h1v1h-1zM9,12h1v1h-1zM12,12h1v1h-1zM15,12h1v1h-1zM16,12h1v1h-1zM17,12h1v1h-1zM18,12h1v1h-1zM19,12h1v1h-1zM23,12h1v1h-1zM26,12h1v1h-1zM30,12h1v1h-1zM32,12h1v1h-1zM4,13h1v1h-1zM5,13h1v1h-1zM7,13h1v1h-1zM9,13h1v1h-1zM12,13h1v1h-1zM15,13h1v1h-1zM17,13h1v1h-1zM18,13h1v1h-1zM19,13h1v1h-1zM20,13h1v1h-1zM21,13h1v1h-1zM23,13h1v1h-1zM30,13h1v1h-1zM31,13h1v1h-1zM32,13h1v1h-1zM33,13h1v1h-1zM34,13h1v1h-1zM2,14h1v1h-1zM3,14h1v1h-1zM4,14h1v1h-1zM5,14h1v1h-1zM6,14h1v1h-1zM8,14h1v1h-1zM9,14h1v1h-1zM12,14h1v1h-1zM13,14h1v1h-1zM16,14h1v1h-1zM17,14h1v1h-1zM18,14h1v1h-1zM22,14h1v1h-1zM24,14h1v1h-1zM25,14h1v1h-1zM27,14h1v1h-1zM30,14h1v1h-1zM31,14h1v1h-1zM33,14h1v1h-1zM34,14h1v1h-1zM2,15h1v1h-1zM3,15h1v1h-1zM5,15h1v1h-1zM6,15h1v1h-1zM15,15h1v1h-1zM17,15h1v1h-1zM19,15h1v1h-1zM20,15h1v1h-1zM24,15h1v1h-1zM25,15h1v1h-1zM27,15h1v1h-1zM28,15h1v1h-1zM32,15h1v1h-1zM33,15h1v1h-1zM34,15h1v1h-1zM2,16h1v1h-1zM4,16h1v1h-1zM8,16h1v1h-1zM9,16h1v1h-1zM10,16h1v1h-1zM11,16h1v1h-1zM15,16h1v1h-1zM17,16h1v1h-1zM18,16h1v1h-1zM19,16h1v1h-1zM22,16h1v1h-1zM24,16h1v1h-1zM26,16h1v1h-1zM27,16h1v1h-1zM28,16h1v1h-1zM30,16h1v1h-1zM31,16h1v1h-1zM32,16h1v1h-1zM33,16h1v1h-1zM2,17h1v1h-1zM4,17h1v1h-1zM7,17h1v1h-1zM9,17h1v1h-1zM12,17h1v1h-1zM13,17h1v1h-1zM14,17h1v1h-1zM16,17h1v1h-1zM17,17h1v1h-1zM20,17h1v1h-1zM23,17h1v1h-1zM26,17h1v1h-1zM27,17h1v1h-1zM28,17h1v1h-1zM30,17h1v1h-1zM32,17h1v1h-1zM2,18h1v1h-1zM3,18h1v1h-1zM6,18h1v1h-1zM7,18h1v1h-1zM8,18h1v1h-1zM9,18h1v1h-1zM11,18h1v1h-1zM12,18h1v1h-1zM17,18h1v1h-1zM18,18h1v1h-1zM19,18h1v1h-1zM24,18h1v1h-1zM26,18h1v1h-1zM27,18h1v1h-1zM29,18h1v1h-1zM30,18h1v1h-1zM31,18h1v1h-1zM34,18h1v1h-1zM4,19h1v1h-1zM13,19h1v1h-1zM15,19h1v1h-1zM16,19h1v1h-1zM18,19h1v1h-1zM20,19h1v1h-1zM21,19h1v1h-1zM22,19h1v1h-1zM23,19h1v1h-1zM25,19h1v1h-1zM28,19h1v1h-1zM29,19h1v1h-1zM31,19h1v1h-1zM32,19h1v1h-1zM34,19h1v1h-1zM8,20h1v1h-1zM12,20h1v1h-1zM14,20h1v1h-1zM15,20h1v1h-1zM16,20h1v1h-1zM17,20h1v1h-1zM20,20h1v1h-1zM22,20h1v1h-1zM23,20h1v1h-1zM24,20h1v1h-1zM29,20h1v1h-1zM30,20h1v1h-1zM32,20h1v1h-1zM2,21h1v1h-1zM3,21h1v1h-1zM6,21h1v1h-1zM9,21h1v1h-1zM11,21h1v1h-1zM12,21h1v1h-1zM13,21h1v1h-1zM14,21h1v1h-1zM15,21h1v1h-1zM17,21h1v1h-1zM23,21h1v1h-1zM26,21h1v1h-1zM28,21h1v1h-1zM29,21h1v1h-1zM30,21h1v1h-1zM31,21h1v1h-1zM32,21h1v1h-1zM33,21h1v1h-1zM34,21h1v1h-1zM3,22h1v1h-1zM5,22h1v1h-1zM7,22h1v1h-1zM8,22h1v1h-1zM9,22h1v1h-1zM10,22h1v1h-1zM11,22h1v1h-1zM20,22h1v1h-1zM24,22h1v1h-1zM25,22h1v1h-1zM27,22h1v1h-1zM29,22h1v1h-1zM30,22h1v1h-1zM31,22h1v1h-1zM33,22h1v1h-1zM34,22h1v1h-1zM2,23h1v1h-1zM4,23h1v1h-1zM6,23h1v1h-1zM7,23h1v1h-1zM9,23h1v1h-1zM14,23h1v1h-1zM15,23h1v1h-1zM17,23h1v1h-1zM18,23h1v1h-1zM22,23h1v1h-1zM23,23h1v1h-1zM25,23h1v1h-1zM28,23h1v1h-1zM29,23h1v1h-1zM32,23h1v1h-1zM34,23h1v1h-1zM2,24h1v1h-1zM4,24h1v1h-1zM5,24h1v1h-1zM6,24h1v1h-1zM7,24h1v1h-1zM8,24h1v1h-1zM10,24h1v1h-1zM11,24h1v1h-1zM13,24h1v1h-1zM14,24h1v1h-1zM16,24h1v1h-1zM19,24h1v1h-1zM21,24h1v1h-1zM24,24h1v1h-1zM27,24h1v1h-1zM29,24h1v1h-1zM31,24h1v1h-1zM33,24h1v1h-1zM2,25h1v1h-1zM4,25h1v1h-1zM5,25h1v1h-1zM11,25h1v1h-1zM15,25h1v1h-1zM18,25h1v1h-1zM21,25h1v1h-1zM22,25h1v1h-1zM23,25h1v1h-1zM24,25h1v1h-1zM27,25h1v1h-1zM29,25h1v1h-1zM32,25h1v1h-1zM33,25h1v1h-1zM2,26h1v1h-1zM8,26h1v1h-1zM9,26h1v1h-1zM10,26h1v1h-1zM11,26h1v1h-1zM13,26h1v1h-1zM14,26h1v1h-1zM16,26h1v1h-1zM19,26h1v1h-1zM21,26h1v1h-1zM24,26h1v1h-1zM25,26h1v1h-1zM26,26h1v1h-1zM27,26h1v1h-1zM28,26h1v1h-1zM29,26h1v1h-1zM30,26h1v1h-1zM31,26h1v1h-1zM10,27h1v1h-1zM11,27h1v1h-1zM12,27h1v1h-1zM15,27h1v1h-1zM18,27h1v1h-1zM19,27h1v1h-1zM20,27h1v1h-1zM21,27h1v1h-1zM22,27h1v1h-1zM24,27h1v1h-1zM26,27h1v1h-1zM30,27h1v1h-1zM32,27h1v1h-1zM34,27h1v1h-1zM2,28h1v1h-1zM3,28h1v1h-1zM4,28h1v1h-1zM5,28h1v1h-1zM6,28h1v1h-1zM7,28h1v1h-1zM8,28h1v1h-1zM13,28h1v1h-1zM14,28h1v1h-1zM17,28h1v1h-1zM19,28h1v1h-1zM23,28h1v1h-1zM24,28h1v1h-1zM25,28h1v1h-1zM26,28h1v1h-1zM28,28h1v1h-1zM30,28h1v1h-1zM32,28h1v1h-1zM33,28h1v1h-1zM2,29h1v1h-1zM8,29h1v1h-1zM10,29h1v1h-1zM12,29h1v1h-1zM15,29h1v1h-1zM17,29h1v1h-1zM18,29h1v1h-1zM19,29h1v1h-1zM20,29h1v1h-1zM22,29h1v1h-1zM23,29h1v1h-1zM24,29h1v1h-1zM25,29h1v1h-1zM26,29h1v1h-1zM30,29h1v1h-1zM31,29h1v1h-1zM32,29h1v1h-1zM33,29h1v1h-1zM2,30h1v1h-1zM4,30h1v1h-1zM5,30h1v1h-1zM6,30h1v1h-1zM8,30h1v1h-1zM10,30h1v1h-1zM11,30h1v1h-1zM13,30h1v1h-1zM17,30h1v1h-1zM18,30h1v1h-1zM21,30h1v1h-1zM24,30h1v1h-1zM26,30h1v1h-1zM27,30h1v1h-1zM28,30h1v1h-1zM29,30h1v1h-1zM30,30h1v1h-1zM31,30h1v1h-1zM34,30h1v1h-1zM2,31h1v1h-1zM4,31h1v1h-1zM5,31h1v1h-1zM6,31h1v1h-1zM8,31h1v1h-1zM10,31h1v1h-1zM11,31h1v1h-1zM12,31h1v1h-1zM16,31h1v1h-1zM17,31h1v1h-1zM19,31h1v1h-1zM20,31h1v1h-1zM23,31h1v1h-1zM27,31h1v1h-1zM30,31h1v1h-1zM32,31h1v1h-1zM33,31h1v1h-1zM34,31h1v1h-1zM2,32h1v1h-1zM4,32h1v1h-1zM5,32h1v1h-1zM6,32h1v1h-1zM8,32h1v1h-1zM10,32h1v1h-1zM12,32h1v1h-1zM14,32h1v1h-1zM15,32h1v1h-1zM16,32h1v1h-1zM17,32h1v1h-1zM18,32h1v1h-1zM20,32h1v1h-1zM26,32h1v1h-1zM28,32h1v1h-1zM29,32h1v1h-1zM31,32h1v1h-1zM32,32h1v1h-1zM2,33h1v1h-1zM8,33h1v1h-1zM17,33h1v1h-1zM22,33h1v1h-1zM23,33h1v1h-1zM24,33h1v1h-1zM27,33h1v1h-1zM28,33h1v1h-1zM30,33h1v1h-1zM32,33h1v1h-1zM2,34h1v1h-1zM3,34h1v1h-1zM4,34h1v1h-1zM5,34h1v1h-1zM6,34h1v1h-1zM7,34h1v1h-1zM8,34h1v1h-1zM10,34h1v1h-1zM11,34h1v1h-1zM12,34h1v1h-1zM14,34h1v1h-1zM15,34h1v1h-1zM17,34h1v1h-1zM18,34h1v1h-1zM19,34h1v1h-1zM21,34h1v1h-1zM24,34h1v1h-1zM25,34h1v1h-1zM26,34h1v1h-1zM27,34h1v1h-1zM28,34h1v1h-1zM29,34h1v1h-1zM31,34h1v1h-1zM33,34h1v1h-1z" fill="#111"/></svg>
+  </div>
+</section>
+
+<div class="progress" id="progress"></div>
+<div class="counter" id="counter"></div>
+<a class="home" href="index.html">Übersicht</a>
+<div class="hint" id="hint">← → zum Blättern · F für Vollbild</div>
+
+<script>
+  // Spinne zeichnen
+  (function () {
+    var axes = ["Raum", "Zeit", "Material", "Aufgaben", "Hilfsmittel", "Sozialform", "Produkt", "Feedback"];
+    var opened  = [4, 3, 4, 4, 4, 4, 5, 4];
+    var R = 160, n = axes.length, svg = document.getElementById("spider");
+    var ns = "http://www.w3.org/2000/svg";
+    function pt(i, v) { var a = -Math.PI / 2 + i * 2 * Math.PI / n; return [Math.cos(a) * R * v / 5, Math.sin(a) * R * v / 5]; }
+    function el(tag, attrs) { var e = document.createElementNS(ns, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); svg.appendChild(e); return e; }
+    for (var r = 1; r <= 5; r++) {
+      var ring = []; for (var i = 0; i < n; i++) ring.push(pt(i, r).join(","));
+      el("polygon", { points: ring.join(" "), fill: "none", stroke: "#e4e4e4", "stroke-width": 1 });
+    }
+    for (var i = 0; i < n; i++) {
+      var p = pt(i, 5); el("line", { x1: 0, y1: 0, x2: p[0], y2: p[1], stroke: "#e4e4e4", "stroke-width": 1 });
+      var l = pt(i, 6.1);
+      var t = el("text", { x: l[0], y: l[1], "text-anchor": Math.abs(l[0]) < 5 ? "middle" : (l[0] > 0 ? "start" : "end"), "dominant-baseline": "middle", "font-size": 15, fill: "#111", "font-family": "system-ui, sans-serif" });
+      t.textContent = axes[i];
+    }
+    function poly(vals, fill, stroke) {
+      var pts = vals.map(function (v, i) { return pt(i, v).join(","); }).join(" ");
+      el("polygon", { points: pts, fill: fill, stroke: stroke, "stroke-width": 2.5, "stroke-linejoin": "round" });
+    }
+    poly(opened, "rgba(47,91,234,0.10)", "#2f5bea");
+  })();
+
+  // Leere Spinne mit Polen
+  (function () {
+    var axes = [["Raum","festgelegt","frei wählbar"],["Zeit","eng","weit"],["Material","nichts","alles"],["Aufgaben","geschlossen","offen"],["Hilfsmittel","keine","multimedial"],["Sozialform","einzeln","zusammen"],["Produkt","handschriftlich","multimedial"],["Feedback","summativ","formativ"]];
+    var ns = "http://www.w3.org/2000/svg", R = 160, n = axes.length;
+    Array.prototype.forEach.call(document.querySelectorAll(".spider-empty"), function (svg) {
+      function pt(i, v) { var a = -Math.PI / 2 + i * 2 * Math.PI / n; return [Math.cos(a) * R * v / 5, Math.sin(a) * R * v / 5]; }
+      function el(tag, attrs, txt) { var e = document.createElementNS(ns, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (txt) e.textContent = txt; svg.appendChild(e); return e; }
+      for (var r = 1; r <= 5; r++) {
+        var ring = []; for (var i = 0; i < n; i++) ring.push(pt(i, r).join(","));
+        el("polygon", { points: ring.join(" "), fill: "none", stroke: r === 5 ? "#2f5bea" : "#e4e4e4", "stroke-width": r === 5 ? 1.5 : 1 });
+      }
+      for (var i = 0; i < n; i++) {
+        var p = pt(i, 5); el("line", { x1: 0, y1: 0, x2: p[0], y2: p[1], stroke: "#cfcfcf", "stroke-width": 1 });
+        var l = pt(i, 6.1), anchor = Math.abs(l[0]) < 5 ? "middle" : (l[0] > 0 ? "start" : "end");
+        el("text", { x: l[0], y: l[1] - 10, "text-anchor": anchor, "dominant-baseline": "middle", "font-size": 19, "font-weight": 600, fill: "#111", "font-family": "system-ui, sans-serif" }, axes[i][0]);
+        el("text", { x: l[0], y: l[1] + 12, "text-anchor": anchor, "dominant-baseline": "middle", "font-size": 14.5, fill: "#2f5bea", "font-family": "system-ui, sans-serif" }, axes[i][1] + " → " + axes[i][2]);
+      }
+      el("circle", { cx: 0, cy: 0, r: 4, fill: "#111" });
+    });
+  })();
+
+  // Navigation
+  var slides = Array.prototype.slice.call(document.querySelectorAll(".slide"));
+  var idx = 0;
+  function show(i) {
+    idx = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach(function (s, j) { s.classList.toggle("active", j === idx); });
+    document.getElementById("progress").style.width = ((idx + 1) / slides.length * 100) + "%";
+    document.getElementById("counter").textContent = (idx + 1) + " / " + slides.length;
+    if (location.hash !== "#" + (idx + 1)) history.replaceState(null, "", "#" + (idx + 1));
+  }
+  function hideHint() { document.getElementById("hint").style.opacity = 0; }
+  document.addEventListener("keydown", function (e) {
+    if (["ArrowRight", "ArrowDown", "PageDown", " ", "Enter"].indexOf(e.key) > -1) { e.preventDefault(); show(idx + 1); hideHint(); }
+    else if (["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].indexOf(e.key) > -1) { e.preventDefault(); show(idx - 1); hideHint(); }
+    else if (e.key === "Home") show(0);
+    else if (e.key === "End") show(slides.length - 1);
+    else if (e.key === "f" || e.key === "F") {
+      if (!document.fullscreenElement) { document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); }
+      else { document.exitFullscreen && document.exitFullscreen(); }
+    }
+  });
+  document.addEventListener("click", function (e) {
+    if (e.target.closest("a")) return;
+    show(e.clientX > window.innerWidth / 3 ? idx + 1 : idx - 1); hideHint();
+  });
+  var tx = null;
+  document.addEventListener("touchstart", function (e) { tx = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener("touchend", function (e) {
+    if (tx === null) return; var dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 50) { show(dx < 0 ? idx + 1 : idx - 1); hideHint(); } tx = null;
+  });
+  var start = parseInt(location.hash.slice(1), 10);
+  show(isNaN(start) ? 0 : start - 1);
+  setTimeout(hideHint, 4000);
+</script>
+</body>
+</html>
